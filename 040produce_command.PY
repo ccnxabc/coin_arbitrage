@@ -10,7 +10,7 @@ import argparse
 import os
 import glob
 
-from dask.array import zeros
+#from dask.array import zeros
 
 #paraswap只支持以下链
 #https://developers.paraswap.network/api/get-rate-for-a-token-pair-1
@@ -21,8 +21,8 @@ openocean_chain=['1','56','324','137','8453','59144','250','43114','42161','10',
 zero_0x_chain=['1','42161','43114','8453','81457','56','59144','5000','34443','10','137','534352']
 
 #https://github.com/ccxt/ccxt CCXT支持的交易所，太多，只选top10
-#CCXT_list=[binance,okx,bitget,bybit,whitebit,coinbase,htx,bitmart,mexc,XT,lbank,kucoin,kraken]
-CCXT_list=['binance','okx']
+CCXT_list=['binance','okx','bitget','bybit','whitebit','coinbase','htx','bitmart','mexc','XT','lbank','kucoin','kraken']
+#CCXT_list=['binance','okx']
 
 directory = 'f:\\'
 
@@ -51,7 +51,7 @@ for keyword in keywords:
     url_chainID=chainID_data[keyword]
     url_chainName=keyword
 
-    #输出DEX的查询URL
+    #(1)输出DEX的查询URL
     for coin_pair in ids:
         out_coin= coin_pair.split("/")[0].lower()
         in_coin = coin_pair.split("/")[1].lower()
@@ -81,9 +81,17 @@ for keyword in keywords:
             print(url_0x)
             print(f'{coin_pair},{url_chainName},0x,DEX,SPOT,{coin_pair}-0x,{url_0x}')
 
-    # 输出CCXT的查询
+    # (2)输出CEX CCXT的查询
         for exchange in CCXT_list:
-            print(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-')
-            print(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDT,-')
+            #kucoin,kraken无永续合约
+            if exchange=="kucoin" or exchange=="kraken":
+                print(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-')
+            #coinbase只使用USDC
+            elif exchange=="coinbase":
+                coin_pair=coin_pair.replace("USDT","USDC")
+                print(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-')
+            else:
+                print(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-')
+                print(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDT,-')
 
 
