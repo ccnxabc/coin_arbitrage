@@ -1,0 +1,57 @@
+{
+    "usdc123": {
+        "id": "usd-coin123",
+        "contract_address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "decimals": 6
+    },
+    "shib456": {
+        "id": "shiba-inu456",
+        "contract_address": "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce",
+        "decimals": 18
+    },
+    "usdc": {
+        "id": "usd-coin",
+        "contract_address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "decimals": 6
+    },
+    "shib": {
+        "id": "shiba-inu",
+        "contract_address": "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce",
+        "decimals": 18
+    },
+    "bnb": {
+        "id": "binancecoin",
+        "contract_address": "0xb8c77482e45f1f44de1745f52c74426c631bdd52",
+        "decimals": 18
+    },
+    "wsteth": {
+        "id": "wrapped-steth",
+        "contract_address": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
+        "decimals": 18
+    },
+    "wbtc": {
+        "id": "wrapped-bitcoin",
+        "contract_address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+        "decimals": 8
+    },
+    "pepe": {
+        "id": "pepe",
+        "contract_address": "0x6982508145454ce325ddbe47a25d4ec3d2311933",
+        "decimals": 18
+    },
+    "dai": {
+        "id": "dai",
+        "contract_address": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "decimals": 18
+    },
+    "usdt": {
+      "id": "tether",
+      "contract_address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      "decimals": 6
+    },
+    "eth": {
+      "id": "ethereum",
+      "contract_address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+      "decimals": 18
+    }
+}

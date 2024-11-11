@@ -1,0 +1,12 @@
+{
+    "example": {
+        "id": "......",
+        "contract_address": "......",
+        "decimals": 10
+    },
+    "pepe": {
+        "id": "pepe",
+        "contract_address": "0x25d887ce7a35172c62febfd67a1856f20faebb00",
+        "decimals": 18
+    }
+}
