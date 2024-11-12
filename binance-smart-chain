@@ -4,7 +4,7 @@
         "contract_address": "......",
         "decimals": 10
     },
-    "pepe": {
+    "PEPE": {
         "id": "pepe",
         "contract_address": "0x25d887ce7a35172c62febfd67a1856f20faebb00",
         "decimals": 18
@@ -41,7 +41,8 @@
     },
     "BTC": {
         "URL_1":"https://api.paraswap.io/tokens/56",
-        "id": "BTCB??",
+        "id": "BTCB",
+        "btw":"NOTSure",
         "contract_address": "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
         "decimals": 18
     }
