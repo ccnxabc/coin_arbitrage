@@ -10,8 +10,6 @@ import argparse
 import os
 import glob
 
-#from dask.array import zeros
-
 #paraswap只支持以下链
 #https://developers.paraswap.network/api/get-rate-for-a-token-pair-1
 paraswap_chain=['1','10','56','137','250','1101','8453','42161','43114','100']
@@ -25,6 +23,15 @@ CCXT_list=['binance','okx','bitget','bybit','whitebit','coinbase','htx','bitmart
 #CCXT_list=['binance','okx']
 
 directory = 'f:\\'
+
+now=datetime.now()
+str_timestamp=now.strftime("%Y%m%d%H%M%S")
+		
+# 创建文件名
+target_filename = directory+"TargetCoin_" + str_timestamp
+#文件不存在则新建；文件存在则追加写
+with open(target_filename, 'a') as file:
+    pass
 
 file_chainID='chainID'
 with open(directory+file_chainID, 'r') as file:
@@ -53,10 +60,36 @@ for keyword in keywords:
 
     #(1)输出DEX的查询URL
     for coin_pair in ids:
+        # 出现符号'#'表示将上面某类资产归为一类，
+        # 例如ETH/USDT,ETH/USDC,#,BNB/USDT,#
+        # 表示将ETH/USDT,ETH/USDC作为同一类资产进行查价套利；BNB/USDT作为另一类资产
+        if coin_pair=="#":
+            with open(target_filename, 'a') as file:
+                file.write('#'+'\n')
+            continue
+  
         out_coin= coin_pair.split("/")[0].lower()
         in_coin = coin_pair.split("/")[1].lower()
 
         #增加判断上述两种币，是否在相应的公链文件存在，只要一个不存在，该交易对就pass
+        out_coin_exist=0
+        in_coin_exist=0
+        for key, value in coin_contract_data.items():
+            if key==out_coin:
+                out_coin_exist=1
+                break
+        if out_coin_exist==1:
+            for key, value in coin_contract_data.items():
+                if key==in_coin:
+                    in_coin_exist=1
+                    break
+        else:
+            print("In "+coin_pair+" (A/B),token A MISSING contract address.")
+            break
+
+        if out_coin_exist+in_coin_exist!=2:
+            print("In "+coin_pair+" (A/B),token A is OK,while token B MISSING contract address.")
+            break
 
         out_coin_contract_address=coin_contract_data[out_coin]["contract_address"]
         out_coin_decimals=coin_contract_data[out_coin]["decimals"]
@@ -71,27 +104,33 @@ for keyword in keywords:
 
         if url_chainID in openocean_chain:
             print(url_openocean)
-            print(f'{coin_pair},{url_chainName},openocean,DEX,SPOT,{coin_pair}-openocean,{url_openocean}')
+            with open(target_filename, 'a') as file:
+                file.write(f'{coin_pair},{url_chainName},openocean,DEX,SPOT,{coin_pair}-openocean,{url_openocean}'+'\n')
 
         if url_chainID in paraswap_chain:
             print(url_paraswap)
-            print(f'{coin_pair},{url_chainName},paraswap,DEX,SPOT,{coin_pair}-paraswap,{url_paraswap}')
+            with open(target_filename, 'a') as file:
+                file.write(f'{coin_pair},{url_chainName},paraswap,DEX,SPOT,{coin_pair}-paraswap,{url_paraswap}'+'\n')
         #需要在header加秘钥
         if url_chainID in zero_0x_chain:
             print(url_0x)
-            print(f'{coin_pair},{url_chainName},0x,DEX,SPOT,{coin_pair}-0x,{url_0x}')
+            with open(target_filename, 'a') as file:
+                file.write(f'{coin_pair},{url_chainName},0x,DEX,SPOT,{coin_pair}-0x,{url_0x}'+'\n')
 
     # (2)输出CEX CCXT的查询
         for exchange in CCXT_list:
             #kucoin,kraken无永续合约
             if exchange=="kucoin" or exchange=="kraken":
-                print(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-')
+                with open(target_filename, 'a') as file:
+                    file.write(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-'+'\n')
             #coinbase只使用USDC
             elif exchange=="coinbase":
                 coin_pair=coin_pair.replace("USDT","USDC")
-                print(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-')
+                with open(target_filename, 'a') as file:
+                    file.write(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-'+'\n')
             else:
-                print(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-')
-                print(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDT,-')
+                with open(target_filename, 'a') as file:
+                    file.write(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-'+'\n')
+                    file.write(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDT,-'+'\n')
 
 
