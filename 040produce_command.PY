@@ -9,6 +9,19 @@ import requests
 import argparse
 import os
 import glob
+import argparse
+
+parser = argparse.ArgumentParser(description='给出coin名,生成DEX和CEX查价的指令或参数')
+
+parser.add_argument('-f', '--filename', type=str, help='JSON文件名')
+parser.add_argument('-coin', nargs='+', help='加密货币列表')
+
+# 解析参数
+args = parser.parse_args()
+print(f'coin:{args}')
+
+# 使用解析后的参数
+print(f'coin:{args.coin}')
 
 #paraswap只支持以下链
 #https://developers.paraswap.network/api/get-rate-for-a-token-pair-1
@@ -22,7 +35,7 @@ zero_0x_chain=['1','42161','43114','8453','81457','56','59144','5000','34443','1
 CCXT_list=['binance','okx','bitget','bybit','whitebit','coinbase','htx','bitmart','mexc','XT','lbank','kucoin','kraken']
 #CCXT_list=['binance','okx']
 
-directory = 'f:\\'
+directory = '.\\'
 
 now=datetime.now()
 str_timestamp=now.strftime("%Y%m%d%H%M%S")
@@ -38,38 +51,39 @@ with open(directory+file_chainID, 'r') as file:
     chainID_data = json.load(file)
 
 #keywords = ['binance-smart-chain','arbitrum-one','ethereum']
-keywords = ['ethereum']
+keywords = ['ethereum','binance-smart-chain']
 
-ids = ['ETH/USDT', 'ETH/USDC']
+ids = ['ETH/USDT','ETH/USDC','#','PEPE/USDT','#']
+#ids = args.coin
 
-for keyword in keywords:
-    files = glob.glob(os.path.join(directory, f'*{keyword}*'))
-
-    if not files:
+    
+for coin_pair in ids:
+    # 出现符号'#'表示将上面某类资产归为一类，
+    # 例如ETH/USDT,ETH/USDC,#,BNB/USDT,#
+    # 表示将ETH/USDT,ETH/USDC作为同一类资产进行查价套利；BNB/USDT作为另一类资产
+    if coin_pair=="#":
+        with open(target_filename, 'a') as file:
+            file.write('#'+'\n')
         continue
-
-    # 找到最新的文件
-    latest_file = max(files, key=os.path.getmtime)
-    print({latest_file})
-
-    with open(latest_file, 'r') as file:
-        coin_contract_data = json.load(file)
-
-    url_chainID=chainID_data[keyword]
-    url_chainName=keyword
-
-    #(1)输出DEX的查询URL
-    for coin_pair in ids:
-        # 出现符号'#'表示将上面某类资产归为一类，
-        # 例如ETH/USDT,ETH/USDC,#,BNB/USDT,#
-        # 表示将ETH/USDT,ETH/USDC作为同一类资产进行查价套利；BNB/USDT作为另一类资产
-        if coin_pair=="#":
-            with open(target_filename, 'a') as file:
-                file.write('#'+'\n')
-            continue
   
-        out_coin= coin_pair.split("/")[0].lower()
-        in_coin = coin_pair.split("/")[1].lower()
+    out_coin= coin_pair.split("/")[0].upper()
+    in_coin = coin_pair.split("/")[1].upper()
+
+    for keyword in keywords:
+        files = glob.glob(os.path.join(directory, f'*{keyword}*'))
+        
+        if not files:
+            continue
+
+        # 找到最新的文件
+        latest_file = max(files, key=os.path.getmtime)
+        print({latest_file})
+
+        with open(latest_file, 'r') as file:
+            coin_contract_data = json.load(file)
+
+        url_chainID=chainID_data[keyword]
+        url_chainName=keyword
 
         #增加判断上述两种币，是否在相应的公链文件存在，只要一个不存在，该交易对就pass
         out_coin_exist=0
@@ -90,7 +104,8 @@ for keyword in keywords:
         if out_coin_exist+in_coin_exist!=2:
             print("In "+coin_pair+" (A/B),token A is OK,while token B MISSING contract address.")
             break
-
+        
+        #(1)输出DEX的查询URL
         out_coin_contract_address=coin_contract_data[out_coin]["contract_address"]
         out_coin_decimals=coin_contract_data[out_coin]["decimals"]
         out_coin_amount=10**int(out_coin_decimals)
@@ -125,9 +140,9 @@ for keyword in keywords:
                     file.write(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-'+'\n')
             #coinbase只使用USDC
             elif exchange=="coinbase":
-                coin_pair=coin_pair.replace("USDT","USDC")
+                coin_pair_coinbase=coin_pair.replace("USDT","USDC")
                 with open(target_filename, 'a') as file:
-                    file.write(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-'+'\n')
+                    file.write(f'{coin_pair_coinbase},-,{exchange},CCXT,SPOT,{coin_pair_coinbase},-'+'\n')
             else:
                 with open(target_filename, 'a') as file:
                     file.write(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-'+'\n')
