@@ -117,7 +117,9 @@ for coin_pair in ids:
         in_coin_contract_address=coin_contract_data[in_coin]["contract_address"]
         in_coin_decimals=coin_contract_data[in_coin]["decimals"]
 
-        url_openocean="https://open-api.openocean.finance/v4/"+url_chainID+"/quote?inTokenAddress="+in_coin_contract_address+"&outTokenAddress="+out_coin_contract_address+"&amount=1&gasPrice=1"
+        #openocean是反人类的逻辑，对于ETH/USDT，inToken指ETH，outToken指USDT，买入一个ETH需要多少USDT，fuck!!!
+        url_openocean="https://open-api.openocean.finance/v4/"+url_chainID+"/quote?inTokenAddress="+out_coin_contract_address+"&outTokenAddress="+in_coin_contract_address+"&amount=1&gasPrice=1"
+
         url_paraswap="https://api.paraswap.io/prices/?srcToken="+out_coin_contract_address+"&srcDecimals="+str(out_coin_decimals)+"&destToken="+in_coin_contract_address+"&destDecimals="+str(in_coin_decimals)+"&amount="+str(out_coin_amount)+"&side=SELL&network="+url_chainID+"&version=6.2"
         url_0x="https://api.0x.org/swap/permit2/price?&chainId="+url_chainID+"&sellToken="+out_coin_contract_address+"&buyToken="+in_coin_contract_address+"&sellAmount="+str(out_coin_amount)
 
