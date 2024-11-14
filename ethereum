@@ -31,7 +31,7 @@
     "ETH": {
         "URL_1":"https://api.paraswap.io/tokens/1",
         "id": "ethereum",
-        "contract_address": ""0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        "contract_address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
         "decimals": 18
     },
     "DAI": {
