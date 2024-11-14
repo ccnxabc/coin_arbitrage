@@ -11,24 +11,17 @@ import os
 import glob
 import argparse
 
-#python 本程序 -help 可以看到命令行用法
-parser = argparse.ArgumentParser(description='给出coin名,生成DEX和CEX查价的指令或参数.例子: python 040produce_command.PY -coin  PEPE/USDT "#" ETH/USDC ETH/USDT "#" ,其中"#“是每类资产结束的标记 ')
+parser = argparse.ArgumentParser(description='给出coin名,生成DEX和CEX查价的指令或参数')
 
-#parser.add_argument('-f', '--filename', type=str, help='JSON文件名')
+parser.add_argument('-f', '--filename', type=str, help='JSON文件名')
 parser.add_argument('-coin', nargs='+', help='加密货币列表')
 
 # 解析参数
 args = parser.parse_args()
+print(f'coin:{args}')
+
+# 使用解析后的参数
 print(f'coin:{args.coin}')
-
-#命令行若传递参数，则使用相关参数；否则使用默认参数['ETH/USDT','ETH/USDC','#','PEPE/USDT','#']
-# 若是程序调试，也是使用默认参数，不用改程序
-if args.coin is None:
-    ids = ['ETH/USDT', 'ETH/USDC', '#', 'PEPE/USDT', '#']
-else:
-    ids = args.coin
-print(f'ids:{ids}')
-
 
 #paraswap只支持以下链
 #https://developers.paraswap.network/api/get-rate-for-a-token-pair-1
@@ -60,6 +53,9 @@ with open(directory+file_chainID, 'r') as file:
 #keywords = ['binance-smart-chain','arbitrum-one','ethereum']
 keywords = ['ethereum','binance-smart-chain']
 
+ids = ['ETH/USDT','ETH/USDC','#','PEPE/USDT','#']
+#ids = args.coin
+
     
 for coin_pair in ids:
     # 出现符号'#'表示将上面某类资产归为一类，
@@ -69,7 +65,7 @@ for coin_pair in ids:
         with open(target_filename, 'a') as file:
             file.write('#'+'\n')
         continue
-
+  
     out_coin= coin_pair.split("/")[0].upper()
     in_coin = coin_pair.split("/")[1].upper()
 
@@ -117,9 +113,7 @@ for coin_pair in ids:
         in_coin_contract_address=coin_contract_data[in_coin]["contract_address"]
         in_coin_decimals=coin_contract_data[in_coin]["decimals"]
 
-        #openocean是反人类的逻辑，对于ETH/USDT，inToken指ETH，outToken指USDT，买入一个ETH需要多少USDT，fuck!!!
-        url_openocean="https://open-api.openocean.finance/v4/"+url_chainID+"/quote?inTokenAddress="+out_coin_contract_address+"&outTokenAddress="+in_coin_contract_address+"&amount=1&gasPrice=1"
-
+        url_openocean="https://open-api.openocean.finance/v4/"+url_chainID+"/quote?inTokenAddress="+in_coin_contract_address+"&outTokenAddress="+out_coin_contract_address+"&amount=1&gasPrice=1"
         url_paraswap="https://api.paraswap.io/prices/?srcToken="+out_coin_contract_address+"&srcDecimals="+str(out_coin_decimals)+"&destToken="+in_coin_contract_address+"&destDecimals="+str(in_coin_decimals)+"&amount="+str(out_coin_amount)+"&side=SELL&network="+url_chainID+"&version=6.2"
         url_0x="https://api.0x.org/swap/permit2/price?&chainId="+url_chainID+"&sellToken="+out_coin_contract_address+"&buyToken="+in_coin_contract_address+"&sellAmount="+str(out_coin_amount)
 
@@ -152,6 +146,12 @@ for coin_pair in ids:
             else:
                 with open(target_filename, 'a') as file:
                     file.write(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-'+'\n')
-                    file.write(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDT,-'+'\n')
+                    #修订永续合约格式：
+                    # A/USDT---A/USDT:USDT
+                    # B/USDC---B/USDC:USDC
+                    if "USDT" in in_coin:
+                        file.write(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDT,-'+'\n')
+                    elif "USDC" in in_coin:
+                        file.write(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDC,-'+'\n')
 
 
