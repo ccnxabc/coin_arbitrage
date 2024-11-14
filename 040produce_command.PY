@@ -11,17 +11,24 @@ import os
 import glob
 import argparse
 
-parser = argparse.ArgumentParser(description='给出coin名,生成DEX和CEX查价的指令或参数')
+#python 本程序 -help 可以看到命令行用法
+parser = argparse.ArgumentParser(description='给出coin名,生成DEX和CEX查价的指令或参数.例子: python 040produce_command.PY -coin  PEPE/USDT "#" ETH/USDC ETH/USDT "#" ,其中"#“是每类资产结束的标记 ')
 
-parser.add_argument('-f', '--filename', type=str, help='JSON文件名')
+#parser.add_argument('-f', '--filename', type=str, help='JSON文件名')
 parser.add_argument('-coin', nargs='+', help='加密货币列表')
 
 # 解析参数
 args = parser.parse_args()
-print(f'coin:{args}')
-
-# 使用解析后的参数
 print(f'coin:{args.coin}')
+
+#命令行若传递参数，则使用相关参数；否则使用默认参数['ETH/USDT','ETH/USDC','#','PEPE/USDT','#']
+# 若是程序调试，也是使用默认参数，不用改程序
+if args.coin is None:
+    ids = ['ETH/USDT', 'ETH/USDC', '#', 'PEPE/USDT', '#']
+else:
+    ids = args.coin
+print(f'ids:{ids}')
+
 
 #paraswap只支持以下链
 #https://developers.paraswap.network/api/get-rate-for-a-token-pair-1
@@ -53,9 +60,6 @@ with open(directory+file_chainID, 'r') as file:
 #keywords = ['binance-smart-chain','arbitrum-one','ethereum']
 keywords = ['ethereum','binance-smart-chain']
 
-ids = ['ETH/USDT','ETH/USDC','#','PEPE/USDT','#']
-#ids = args.coin
-
     
 for coin_pair in ids:
     # 出现符号'#'表示将上面某类资产归为一类，
@@ -65,7 +69,7 @@ for coin_pair in ids:
         with open(target_filename, 'a') as file:
             file.write('#'+'\n')
         continue
-  
+
     out_coin= coin_pair.split("/")[0].upper()
     in_coin = coin_pair.split("/")[1].upper()
 
