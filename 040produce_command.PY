@@ -11,17 +11,31 @@ import os
 import glob
 import argparse
 
-parser = argparse.ArgumentParser(description='给出coin名,生成DEX和CEX查价的指令或参数')
+#python 本程序 -help 可以看到命令行用法
+parser = argparse.ArgumentParser(description='给出coin名,生成DEX和CEX查价的指令或参数.例子: python 040produce_command.PY -coin  PEPE/USDT "#" ETH/USDC ETH/USDT "#" ,其中"#“是每类资产结束的标记 ')
 
-parser.add_argument('-f', '--filename', type=str, help='JSON文件名')
+parser.add_argument('-f', '--filename', type=str, help='指定写到某个文件')
 parser.add_argument('-coin', nargs='+', help='加密货币列表')
+parser.add_argument('-N4paraswap', help='对于价格低的MEME币,paraswap会出错,需要用N个来查价')
 
 # 解析参数
 args = parser.parse_args()
-print(f'coin:{args}')
-
-# 使用解析后的参数
 print(f'coin:{args.coin}')
+
+#命令行若传递参数，则使用相关参数；否则使用默认参数['ETH/USDT','ETH/USDC','#','PEPE/USDT','#']
+# 若是程序调试，也是使用默认参数，不用改程序
+if args.coin is None:
+    ids = ['ETH/USDT', 'ETH/USDC', '#', 'PEPE/USDT', '#']
+else:
+    ids = args.coin
+print(f'ids:{ids}')
+
+if args.N4paraswap is None:
+    mutiple_for_paraswap=10000
+else:
+    mutiple_for_paraswap = args.N4paraswap
+print(f'N4paraswap:{args.N4paraswap}')
+
 
 #paraswap只支持以下链
 #https://developers.paraswap.network/api/get-rate-for-a-token-pair-1
@@ -41,7 +55,10 @@ now=datetime.now()
 str_timestamp=now.strftime("%Y%m%d%H%M%S")
 		
 # 创建文件名
-target_filename = directory+"TargetCoin_" + str_timestamp
+if args.filename is None:
+    target_filename = directory+"TargetCoin_" + str_timestamp
+else:
+    target_filename=args.filename
 #文件不存在则新建；文件存在则追加写
 with open(target_filename, 'a') as file:
     pass
@@ -53,9 +70,6 @@ with open(directory+file_chainID, 'r') as file:
 #keywords = ['binance-smart-chain','arbitrum-one','ethereum']
 keywords = ['ethereum','binance-smart-chain']
 
-ids = ['ETH/USDT','ETH/USDC','#','PEPE/USDT','#']
-#ids = args.coin
-
     
 for coin_pair in ids:
     # 出现符号'#'表示将上面某类资产归为一类，
@@ -65,7 +79,7 @@ for coin_pair in ids:
         with open(target_filename, 'a') as file:
             file.write('#'+'\n')
         continue
-  
+
     out_coin= coin_pair.split("/")[0].upper()
     in_coin = coin_pair.split("/")[1].upper()
 
@@ -113,24 +127,26 @@ for coin_pair in ids:
         in_coin_contract_address=coin_contract_data[in_coin]["contract_address"]
         in_coin_decimals=coin_contract_data[in_coin]["decimals"]
 
-        url_openocean="https://open-api.openocean.finance/v4/"+url_chainID+"/quote?inTokenAddress="+in_coin_contract_address+"&outTokenAddress="+out_coin_contract_address+"&amount=1&gasPrice=1"
-        url_paraswap="https://api.paraswap.io/prices/?srcToken="+out_coin_contract_address+"&srcDecimals="+str(out_coin_decimals)+"&destToken="+in_coin_contract_address+"&destDecimals="+str(in_coin_decimals)+"&amount="+str(out_coin_amount)+"&side=SELL&network="+url_chainID+"&version=6.2"
+        #openocean是反人类的逻辑，对于ETH/USDT，inToken指ETH，outToken指USDT，买入一个ETH需要多少USDT，fuck!!!
+        url_openocean="https://open-api.openocean.finance/v4/"+url_chainID+"/quote?inTokenAddress="+out_coin_contract_address+"&outTokenAddress="+in_coin_contract_address+"&amount=1&gasPrice=1"
+        out_coin_amount_for_paraswap=out_coin_amount * int(mutiple_for_paraswap)
+        url_paraswap="https://api.paraswap.io/prices/?srcToken="+out_coin_contract_address+"&srcDecimals="+str(out_coin_decimals)+"&destToken="+in_coin_contract_address+"&destDecimals="+str(in_coin_decimals)+"&amount="+str(out_coin_amount_for_paraswap)+"&side=SELL&network="+url_chainID+"&version=6.2"
         url_0x="https://api.0x.org/swap/permit2/price?&chainId="+url_chainID+"&sellToken="+out_coin_contract_address+"&buyToken="+in_coin_contract_address+"&sellAmount="+str(out_coin_amount)
 
         if url_chainID in openocean_chain:
             print(url_openocean)
             with open(target_filename, 'a') as file:
-                file.write(f'{coin_pair},{url_chainName},openocean,DEX,SPOT,{coin_pair}-openocean,{url_openocean}'+'\n')
+                file.write(f'{coin_pair},{url_chainName},openocean,DEX,SPOT,{coin_pair}-{url_chainName}-openocean,{url_openocean}'+'\n')
 
         if url_chainID in paraswap_chain:
             print(url_paraswap)
             with open(target_filename, 'a') as file:
-                file.write(f'{coin_pair},{url_chainName},paraswap,DEX,SPOT,{coin_pair}-paraswap,{url_paraswap}'+'\n')
+                file.write(f'{coin_pair},{url_chainName},paraswap,DEX,SPOT,{coin_pair}-{url_chainName}-paraswap,{url_paraswap}'+'\n')
         #需要在header加秘钥
         if url_chainID in zero_0x_chain:
             print(url_0x)
             with open(target_filename, 'a') as file:
-                file.write(f'{coin_pair},{url_chainName},0x,DEX,SPOT,{coin_pair}-0x,{url_0x}'+'\n')
+                file.write(f'{coin_pair},{url_chainName},0x,DEX,SPOT,{coin_pair}-{url_chainName}-0x,{url_0x}'+'\n')
 
     # (2)输出CEX CCXT的查询
         for exchange in CCXT_list:
@@ -146,12 +162,12 @@ for coin_pair in ids:
             else:
                 with open(target_filename, 'a') as file:
                     file.write(f'{coin_pair},-,{exchange},CCXT,SPOT,{coin_pair},-'+'\n')
-                    #修订永续合约格式：
+                    # 修订永续合约格式：
                     # A/USDT---A/USDT:USDT
                     # B/USDC---B/USDC:USDC
                     if "USDT" in in_coin:
-                        file.write(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDT,-'+'\n')
+                        file.write(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDT,-' + '\n')
                     elif "USDC" in in_coin:
-                        file.write(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDC,-'+'\n')
+                        file.write(f'{coin_pair},-,{exchange},CCXT,PERP,{coin_pair}:USDC,-' + '\n')
 
 
