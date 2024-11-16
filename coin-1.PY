@@ -71,7 +71,9 @@ def get_decentralized_prices(exchange, get_url):
             fucking_0x_ues_former_destDecimals = destDecimals
             #单价太低，例如pepe，paraswap会出现价格偏差，出现"ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT"
             #规避方法是通过10000个pepe去查价能兑换a个USDT，则每个pepe价格为a/10000
-            price = round( (int(destAmount) * (0.1 ** int(destDecimals)) ) / ( int(srcAmount) * (0.1 ** int(srcDecimals)) ), int(destDecimals))
+            #price = round( (int(destAmount) * (0.1 ** int(destDecimals)) ) / ( int(srcAmount) * (0.1 ** int(srcDecimals)) ), int(destDecimals))
+            price = (int(destAmount) * (0.1 ** int(destDecimals))) / (int(srcAmount) * (0.1 ** int(srcDecimals)))
+
 
 
         elif "openocean" in exchange:
